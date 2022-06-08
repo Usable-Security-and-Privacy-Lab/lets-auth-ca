@@ -16,7 +16,7 @@ import (
 	"os"
 	"sync"
 
-	"go-play/errorHandler"
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/errorHandler"
 
 	"gopkg.in/yaml.v2"
 )

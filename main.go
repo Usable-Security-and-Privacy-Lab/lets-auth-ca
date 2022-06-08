@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go-play/config"
+
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/config"
 )
 
 func main() {

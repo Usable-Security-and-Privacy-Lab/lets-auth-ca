@@ -1,4 +1,4 @@
-module go-play
+module github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca
 
 go 1.18
 
