@@ -14,14 +14,18 @@ import (
 const dsn = "gorm_test:ThisIsAReallySecureTestPassword@tcp(127.0.0.1:3306)/gorm?charset=utf8mb4&parseTime=True&loc=Local"
 
 var once sync.Once
+
+// Singleton instance
 var dbWrapper *DBWrapper
 
+// This wrapper exists solely so that member functions can be written to work on the database.
 type DBWrapper struct {
 	db *gorm.DB
 }
 
+// The singleton pattern for a database connection.
 func GetDB() (*DBWrapper, error) {
-	// Singleton model
+	// Singleton pattern
 	once.Do(func() {
 		// Open Database Connection
 		temp_db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
