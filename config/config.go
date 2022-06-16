@@ -13,6 +13,7 @@ package config
 // https://golangbyexample.com/singleton-design-pattern-go/
 
 import (
+	"crypto/rsa"
 	"os"
 	"sync"
 
@@ -31,6 +32,12 @@ type Config struct {
 	DbPassword string `yaml:"database password"`
 	// private key
 	PrivateKeyFile string `yaml:"private key"`
+	// location of the root certificate
+	RootCertificateFile string `yaml:"root cert loc"`
+	// public key
+	PublicKey rsa.PublicKey
+	// private key
+	PrivateKey rsa.PrivateKey
 }
 
 func Init(configDir, configMode string) {
