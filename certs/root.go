@@ -15,6 +15,9 @@ import (
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 )
 
+// SignCSR takes the ca's private key and public key and then recreates and
+// re-signs the root certificate. The function then returns a pointer to the
+// resulting x509.Certificate object.
 func SignRoot(pubKey *rsa.PublicKey, privKey *rsa.PrivateKey) (*x509.Certificate, error) {
 	rootNotBefore := time.Now()
 	rootNotAfter := rootNotBefore.Add(time.Duration(nanoToSeconds * secondsToDays * RootCertValidDays))
@@ -50,6 +53,9 @@ func SignRoot(pubKey *rsa.PublicKey, privKey *rsa.PrivateKey) (*x509.Certificate
 	return signedCert, nil
 }
 
+// ReSignRootCert is the core of the routine run by the ca when the -root flag
+// is used. It recreates and re-signs the root certificate and then writes that
+// certificate to the file specified in the config file.
 func ReSignRootCert() {
 	cfg := config.Get()
 

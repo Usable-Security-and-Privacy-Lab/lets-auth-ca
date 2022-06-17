@@ -1,16 +1,15 @@
-package config
-
-// Configuration is loaded from a configuration file called 'config.yml' in
-// a specified directory. The intended usage is for the user to setup a
-// 'development' directory and a 'production' directory containing
-// necessary configuration info.
-
+// config loads a Configuration from a configuration file called 'config.yml'
+// in a specified directory. The intended usage is for the user to setup a
+// 'development' directory and a 'production' directory containing necessary
+// configuration info.
+//
 // The configuration uses the YAML format.
-
-// This code follows the singleton pattern, so that there is one Config variable
-// that is used globally. The sync.Once library ensures that the variable is
-// configured only once. We follow the pattern shown here:
+//
+// This code follows the singleton pattern, so that there is one Config
+// variable that is used globally. The sync.Once library ensures that the
+// variable is configured only once. We follow the pattern shown here:
 // https://golangbyexample.com/singleton-design-pattern-go/
+package config
 
 import (
 	"crypto/rsa"
@@ -27,25 +26,23 @@ import (
 var once sync.Once
 var cfg *Config
 
+// A Config is a singleton which reads in and stores the configuration file(s)
+// needed to run the CA
 type Config struct {
-	// name of the configuration, such as 'development' or 'production'
-	Name string `yaml:"name"`
-	// database configuration
-	DbPassword string `yaml:"database password"`
-	// public key file path
-	PublicKeyFile string `yaml:"public key"`
-	// private key file path
-	PrivateKeyFile string `yaml:"private key"`
-	// location of the root certificate
-	RootCertificateFile string `yaml:"root cert loc"`
-	// public key
-	PublicKey *rsa.PublicKey
-	// private key
-	PrivateKey *rsa.PrivateKey
-	// root certificate
-	RootCertificate *x509.Certificate
+	Name                string            `yaml:"name"`              // name of the configuration, such as 'development' or 'production'
+	DbPassword          string            `yaml:"database password"` // database configuration
+	PublicKeyFile       string            `yaml:"public key"`        // public key file path
+	PrivateKeyFile      string            `yaml:"private key"`       // private key file path
+	RootCertificateFile string            `yaml:"root cert loc"`     // location of the root certificate
+	PublicKey           *rsa.PublicKey    `yaml:"-"`                 // public key
+	PrivateKey          *rsa.PrivateKey   `yaml:"-"`                 // private key
+	RootCertificate     *x509.Certificate `yaml:"-"`                 // root certificate
 }
 
+// Init is called early into the runtime of a program. This function
+// initializes the config singleton and reads in all of the referenced files.
+// After this function returns, Get() may be called to retrieve a copy of a
+// pointer to the singleton.
 func Init(configDir, configMode string) {
 	fileName := configDir + "/" + configMode + "/config.yml"
 	once.Do(
@@ -94,6 +91,8 @@ func Init(configDir, configMode string) {
 		})
 }
 
+// Get returns a pointer to the singleton of the Config object. If Init() has
+// not been called or returned an error, this function will return nil.
 func Get() *Config {
 	return cfg
 }
