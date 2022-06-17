@@ -10,6 +10,8 @@ import (
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/errorHandler"
 )
 
+var cfg *config.Config
+
 func main() {
 	// process command line arguments
 	signRoot := flag.Bool("root", false, "Resigns the root certificate. Mutually exclusive with other operating flags.")
@@ -18,21 +20,27 @@ func main() {
 	flag.Parse()
 
 	config.Init(*configDir, *configMode)
-	cfg := config.Get()
+	cfg = config.Get()
 	fmt.Println(cfg.Name)
 
 	if *signRoot {
-		root, err := certs.SignRoot(cfg.PublicKey, cfg.PrivateKey)
-		if err != nil {
-			errorHandler.Fatal(err)
-		}
-
-		rootData := certs.PackCertificateToPemBytes(root)
-		err = os.WriteFile(cfg.RootCertificateFile, rootData, 0644)
-		if err != nil {
-			errorHandler.Fatal(err)
-		}
-
-		fmt.Println("Successfully resigned the root certificate")
+		resignRootCert()
+		os.Exit(0)
 	}
+	// else continue with normal ca operations
+}
+
+func resignRootCert() {
+	root, err := certs.SignRoot(cfg.PublicKey, cfg.PrivateKey)
+	if err != nil {
+		errorHandler.Fatal(err)
+	}
+
+	rootData := certs.PackCertificateToPemBytes(root)
+	err = os.WriteFile(cfg.RootCertificateFile, rootData, 0644)
+	if err != nil {
+		errorHandler.Fatal(err)
+	}
+
+	fmt.Println("Successfully resigned the root certificate")
 }
