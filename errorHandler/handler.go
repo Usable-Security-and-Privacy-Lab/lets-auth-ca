@@ -1,11 +1,12 @@
 package errorHandler
 
 import (
-	"fmt"
 	"os"
+
+	"github.com/rs/zerolog/log"
 )
 
 func Fatal(err error) {
-	fmt.Println(err.Error())
+	log.Fatal().Err(err).Msg("A fatal error has occurred")
 	os.Exit(2)
 }
