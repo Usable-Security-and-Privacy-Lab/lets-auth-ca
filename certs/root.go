@@ -5,8 +5,13 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"fmt"
 	"math/big"
+	"os"
 	"time"
+
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/config"
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/errorHandler"
 )
 
 func SignRoot(pubKey rsa.PublicKey, privKey rsa.PrivateKey) (*x509.Certificate, error) {
@@ -42,4 +47,21 @@ func SignRoot(pubKey rsa.PublicKey, privKey rsa.PrivateKey) (*x509.Certificate, 
 	}
 
 	return signedCert, nil
+}
+
+func ResignRootCert() {
+	cfg := config.Get()
+
+	root, err := SignRoot(cfg.PublicKey, cfg.PrivateKey)
+	if err != nil {
+		errorHandler.Fatal(err)
+	}
+
+	rootData := PackCertificateToPemBytes(root)
+	err = os.WriteFile(cfg.RootCertificateFile, rootData, 0644)
+	if err != nil {
+		errorHandler.Fatal(err)
+	}
+
+	fmt.Println("Successfully resigned the root certificate")
 }

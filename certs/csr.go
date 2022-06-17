@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const AuthCertValidDays int = 7
+const AuthCertValidDays int = 10
 const RootCertValidDays int = 365
 const SessionCertValidDays int = 30
 const nanoToSeconds int = 1000000000
@@ -32,7 +32,7 @@ func SignCSR(csr *x509.CertificateRequest, privKey rsa.PrivateKey, activeDays in
 		NotBefore:      csrNotBefore,
 		NotAfter:       csrNotAfter,
 
-		SubjectKeyId:          []byte{1, 2, 3, 4},
+		SubjectKeyId:          []byte{1, 2, 3, 4}, // May need to ba a unique identifier. Is x509 extension
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
