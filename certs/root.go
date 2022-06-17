@@ -12,9 +12,10 @@ import (
 
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/config"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/errorHandler"
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 )
 
-func SignRoot(pubKey rsa.PublicKey, privKey rsa.PrivateKey) (*x509.Certificate, error) {
+func SignRoot(pubKey *rsa.PublicKey, privKey *rsa.PrivateKey) (*x509.Certificate, error) {
 	rootNotBefore := time.Now()
 	rootNotAfter := rootNotBefore.Add(time.Duration(nanoToSeconds * secondsToDays * RootCertValidDays))
 
@@ -36,7 +37,7 @@ func SignRoot(pubKey rsa.PublicKey, privKey rsa.PrivateKey) (*x509.Certificate, 
 		IsCA:                  true,
 	}
 
-	signedCertDER, err := x509.CreateCertificate(rand.Reader, &rootTemplate, &rootTemplate, &pubKey, &privKey)
+	signedCertDER, err := x509.CreateCertificate(rand.Reader, &rootTemplate, &rootTemplate, pubKey, privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +58,7 @@ func ResignRootCert() {
 		errorHandler.Fatal(err)
 	}
 
-	rootData := PackCertificateToPemBytes(root)
+	rootData := util.PackCertificateToPemBytes(root)
 	err = os.WriteFile(cfg.RootCertificateFile, rootData, 0644)
 	if err != nil {
 		errorHandler.Fatal(err)

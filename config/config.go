@@ -14,10 +14,12 @@ package config
 
 import (
 	"crypto/rsa"
+	"crypto/x509"
 	"os"
 	"sync"
 
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/errorHandler"
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 
 	"gopkg.in/yaml.v2"
 )
@@ -30,27 +32,62 @@ type Config struct {
 	Name string `yaml:"name"`
 	// database configuration
 	DbPassword string `yaml:"database password"`
-	// private key
+	// public key file path
+	PublicKeyFile string `yaml:"public key"`
+	// private key file path
 	PrivateKeyFile string `yaml:"private key"`
 	// location of the root certificate
 	RootCertificateFile string `yaml:"root cert loc"`
 	// public key
-	PublicKey rsa.PublicKey
+	PublicKey *rsa.PublicKey
 	// private key
-	PrivateKey rsa.PrivateKey
+	PrivateKey *rsa.PrivateKey
+	// root certificate
+	RootCertificate *x509.Certificate
 }
 
 func Init(configDir, configMode string) {
 	fileName := configDir + "/" + configMode + "/config.yml"
 	once.Do(
 		func() {
-			f, err := os.Open(fileName)
+			// Read data in
+			fData, err := os.ReadFile(fileName)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
-			defer f.Close()
-			decoder := yaml.NewDecoder(f)
-			err = decoder.Decode(&cfg)
+
+			// Parse yaml code
+			err = yaml.Unmarshal(fData, cfg)
+			if err != nil {
+				errorHandler.Fatal(err)
+			}
+
+			// Read/parse root certificate
+			rootData, err := os.ReadFile(cfg.RootCertificateFile)
+			if err != nil {
+				errorHandler.Fatal(err)
+			}
+			cfg.RootCertificate, err = util.UnpackCertFromBytes(rootData)
+			if err != nil {
+				errorHandler.Fatal(err)
+			}
+
+			// Read/parse public key
+			pubKeyData, err := os.ReadFile(cfg.PublicKeyFile)
+			if err != nil {
+				errorHandler.Fatal(err)
+			}
+			cfg.PublicKey, err = util.UnpackPublicKeyFromBytes(pubKeyData)
+			if err != nil {
+				errorHandler.Fatal(err)
+			}
+
+			// Read/parse public key
+			privKeyData, err := os.ReadFile(cfg.PrivateKeyFile)
+			if err != nil {
+				errorHandler.Fatal(err)
+			}
+			cfg.PrivateKey, err = util.UnpackPrivateKeyFromBytes(privKeyData)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
