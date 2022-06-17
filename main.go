@@ -21,7 +21,7 @@ func main() {
 	fmt.Println(cfg.Name)
 
 	if *signRoot {
-		certs.ResignRootCert()
+		certs.ReSignRootCert()
 		os.Exit(0)
 	}
 	// else continue with normal ca operations

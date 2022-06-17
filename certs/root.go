@@ -50,7 +50,7 @@ func SignRoot(pubKey *rsa.PublicKey, privKey *rsa.PrivateKey) (*x509.Certificate
 	return signedCert, nil
 }
 
-func ResignRootCert() {
+func ReSignRootCert() {
 	cfg := config.Get()
 
 	root, err := SignRoot(cfg.PublicKey, cfg.PrivateKey)
