@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/certs"
-	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/config"
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 )
 
 func main() {
@@ -16,8 +16,8 @@ func main() {
 	configMode := flag.String("config", "development", "configuration mode")
 	flag.Parse()
 
-	config.Init(*configDir, *configMode)
-	cfg := config.Get()
+	util.ConfigInit(*configDir, *configMode)
+	cfg := util.GetConfig()
 	fmt.Println(cfg.Name)
 
 	if *signRoot {

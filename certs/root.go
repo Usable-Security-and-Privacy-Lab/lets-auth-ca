@@ -10,7 +10,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/config"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/errorHandler"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 )
@@ -57,7 +56,7 @@ func SignRoot(pubKey *rsa.PublicKey, privKey *rsa.PrivateKey) (*x509.Certificate
 // is used. It recreates and re-signs the root certificate and then writes that
 // certificate to the file specified in the config file.
 func ReSignRootCert() {
-	cfg := config.Get()
+	cfg := util.GetConfig()
 
 	root, err := SignRoot(cfg.PublicKey, cfg.PrivateKey)
 	if err != nil {

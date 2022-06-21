@@ -9,7 +9,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/config"
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 )
 
 // AuthCertValidDays represents the number of days an Authenticator Certificate
@@ -75,7 +75,7 @@ func SignCSR(csr *x509.CertificateRequest, privKey rsa.PrivateKey, activeDays in
 	// }
 	// rootCertificate := config.Get().RootCertificate
 
-	signedCertDER, err := x509.CreateCertificate(rand.Reader, &csrTemplate, config.Get().RootCertificate, csr.PublicKey, &privKey)
+	signedCertDER, err := x509.CreateCertificate(rand.Reader, &csrTemplate, util.GetConfig().RootCertificate, csr.PublicKey, &privKey)
 	if err != nil {
 		return nil, err
 	}

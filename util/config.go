@@ -1,4 +1,4 @@
-// config loads a Configuration from a configuration file called 'config.yml'
+// util loads a Configuration from a configuration file called 'config.yml'
 // in a specified directory. The intended usage is for the user to setup a
 // 'development' directory and a 'production' directory containing necessary
 // configuration info.
@@ -9,16 +9,16 @@
 // variable that is used globally. The sync.Once library ensures that the
 // variable is configured only once. We follow the pattern shown here:
 // https://golangbyexample.com/singleton-design-pattern-go/
-package config
+package util
 
 import (
 	"crypto/rsa"
 	"crypto/x509"
+	"errors"
 	"os"
 	"sync"
 
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/errorHandler"
-	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 
 	"gopkg.in/yaml.v2"
 )
@@ -39,11 +39,11 @@ type Config struct {
 	RootCertificate     *x509.Certificate `yaml:"-"`                 // root certificate
 }
 
-// Init is called early into the runtime of a program. This function
+// ConfigInit is called early into the runtime of a program. This function
 // initializes the config singleton and reads in all of the referenced files.
 // After this function returns, Get() may be called to retrieve a copy of a
 // pointer to the singleton.
-func Init(configDir, configMode string) {
+func ConfigInit(configDir, configMode string) {
 	fileName := configDir + "/" + configMode + "/config.yml"
 	once.Do(
 		func() {
@@ -64,7 +64,7 @@ func Init(configDir, configMode string) {
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
-			cfg.RootCertificate, err = util.UnpackCertFromBytes(rootData)
+			cfg.RootCertificate, err = UnpackCertFromBytes(rootData)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
@@ -74,7 +74,7 @@ func Init(configDir, configMode string) {
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
-			cfg.PublicKey, err = util.UnpackPublicKeyFromBytes(pubKeyData)
+			cfg.PublicKey, err = UnpackPublicKeyFromBytes(pubKeyData)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
@@ -84,7 +84,7 @@ func Init(configDir, configMode string) {
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
-			cfg.PrivateKey, err = util.UnpackPrivateKeyFromBytes(privKeyData)
+			cfg.PrivateKey, err = UnpackPrivateKeyFromBytes(privKeyData)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
@@ -93,6 +93,9 @@ func Init(configDir, configMode string) {
 
 // Get returns a pointer to the singleton of the Config object. If Init() has
 // not been called or returned an error, this function will return nil.
-func Get() *Config {
+func GetConfig() *Config {
+	if cfg == nil {
+		errorHandler.Fatal(errors.New("Config singleton not initialized"))
+	}
 	return cfg
 }
