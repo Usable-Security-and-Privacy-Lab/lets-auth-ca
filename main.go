@@ -8,8 +8,6 @@ import (
 
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/api"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/certs"
-
-	// "github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/config"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 
 	"github.com/gorilla/mux"
@@ -25,7 +23,7 @@ func main() {
 	signRoot := flag.Bool("root", false, "Resigns the root certificate. Mutually exclusive with other operating flags.")
 	configDir := flag.String("configDir", "configs", "configuration directory")
 	configMode := flag.String("config", "development", "configuration mode")
-	logLevel := flag.Int("log", 1, "Level of Logging\n\t-1:trace\n\t0:debug\n\t1:info\n\t2:warn\n\t3:error\n\t4:fatal\n\t5:Painc")
+	logLevel := flag.Int("log", 1, "Level of Logging\n\t-1:trace\n\t0:debug\n\t1:info\n\t2:warn\n\t3:error\n\t4:fatal\n\t5:Panic")
 	logPath := flag.String("path", "", "Path to logging output file, leave blank for stdout/stderr")
 
 	flag.Parse()
@@ -41,7 +39,7 @@ func main() {
 	// else continue with normal ca operations
 
 	// Logger setup
-	fmt.Println("settting up logger...")
+	fmt.Println("setting up logger...")
 	util.SetUpLogger(*logLevel, *logPath)
 	util.LogTest()
 
