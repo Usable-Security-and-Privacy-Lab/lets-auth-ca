@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/duo-labs/webauthn/webauthn"
 	"github.com/duo-labs/webauthn/protocol"
+	"github.com/duo-labs/webauthn/webauthn"
 	"github.com/gorilla/mux"
 )
 
@@ -43,9 +43,9 @@ func CreateBegin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Printf("Creating username for %s\n", username)
-	
+
 	// TBD We need to check if this username has been taken already. If yes, return an error. If no, put it into the database. If account creation ultimately fails, remove it from the database.
-	
+
 	registerOptions := func(credCreationOpts *protocol.PublicKeyCredentialCreationOptions) {
 		// TBD -- we used to do this -- check to see if it is needed
 		// credCreationOpts.CredentialExcludeList = user.CredentialExcludeList()
@@ -97,7 +97,7 @@ func CreateFinish(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println("got credential %+v \n", credential)
+	fmt.Printf("got credential %+v \n", credential)
 
 	// TBD we need to add this credential to the user's account, so that login works.
 	// user.AddCredential(*credential)
@@ -106,7 +106,6 @@ func CreateFinish(w http.ResponseWriter, r *http.Request) {
 
 	jsonResponse(w, "Registration Success", http.StatusOK)
 }
-
 
 // from: https://github.com/duo-labs/webauthn.io/blob/3f03b482d21476f6b9fb82b2bf1458ff61a61d41/server/response.go#L15
 func jsonResponse(w http.ResponseWriter, d interface{}, c int) {
