@@ -3,7 +3,6 @@ package certs
 
 import (
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"math/big"
@@ -27,13 +26,22 @@ const nanoToSeconds int = 1000000000
 const secondsToMinutes int = 60
 const secondsToDays int = 86400
 
+
+// Sign an Authentication Certificate. May want to do validation of the CSR here.
+func SignAuthCertificate(csr *x509.CertificateRequest) (*x509.Certificate, error) {
+	return signCSR(csr, AuthCertValidDays)
+}
+
 // SignCSR takes an x509.CertificateRequest, the ca's private key, and the
 // number of days that the certificate should be active for and then signs the
 // Certificate Signing Request using the root certificate. The function then
 // returns a pointer to the resulting x509.Certificate object.
-func SignCSR(csr *x509.CertificateRequest, privKey rsa.PrivateKey, activeDays int) (*x509.Certificate, error) {
+func signCSR(csr *x509.CertificateRequest, activeDays int) (*x509.Certificate, error) {
 	csrNotBefore := time.Now()
 	csrNotAfter := csrNotBefore.Add(time.Duration(nanoToSeconds * secondsToDays * activeDays))
+
+	// get the configuration
+	cfg := util.GetConfig()
 
 	// rootNotBefore := time.Now()
 	// rootNotAfter := rootNotBefore.Add(time.Duration(nanoToSeconds * secondsToDays * RootCertValidDays))
@@ -75,7 +83,7 @@ func SignCSR(csr *x509.CertificateRequest, privKey rsa.PrivateKey, activeDays in
 	// }
 	// rootCertificate := config.Get().RootCertificate
 
-	signedCertDER, err := x509.CreateCertificate(rand.Reader, &csrTemplate, util.GetConfig().RootCertificate, csr.PublicKey, &privKey)
+	signedCertDER, err := x509.CreateCertificate(rand.Reader, &csrTemplate, cfg.RootCertificate, csr.PublicKey, cfg.PrivateKey)
 	if err != nil {
 		return nil, err
 	}

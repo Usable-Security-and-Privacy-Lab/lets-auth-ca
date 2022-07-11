@@ -18,9 +18,12 @@ import (
 // used for session management.
 const DefaultEncryptionKeyLength = 32
 
-// WebauthnSession is the name of the session cookie used to manage session-
-// related information.
+// Two sessions, one for webauthn registration/login, one for persisting login after webauthn is done
 const WebauthnSession = "webauthn-session"
+const WebauthnSessionMaxAge = 30 // 30 seconds
+
+const UserSession = "user-session"
+const UserSessionMaxAge = 30  // 30 seconds
 
 // ErrInsufficientBytesRead is returned in the rare case that an unexpected
 // number of bytes are returned from the crypto/rand reader when creating
@@ -73,7 +76,7 @@ func (store *Store) SaveWebauthnSession(key string, data *webauthn.SessionData, 
 		fmt.Println("failed saving webauthn session")
 		return err
 	}
-	return store.Set(key, marshaledData, r, w)
+	return store.Set(WebauthnSession, WebauthnSessionMaxAge, key, marshaledData, r, w)
 }
 
 // GetWebauthnSession unmarshals and returns the webauthn session information
@@ -101,18 +104,52 @@ func (store *Store) GetWebauthnSession(key string, r *http.Request) (webauthn.Se
 	return sessionData, nil
 }
 
+func (store *Store) setUserSession(w http.ResponseWriter, r *http.Request, username string) (err error) {
+	return store.Set(UserSession, UserSessionMaxAge, "username", username, r, w)
+}
+
+func (store *Store) getUserSession(r *http.Request) (username string, err error) {
+	session, err := sessionStore.Get(r, UserSession)
+	if err != nil {
+		err = errors.New("Error getting user session from store: " + err.Error())
+		return "", nil
+	}
+	username, present := session.Values["username"].(string)
+	if !present {
+		return "", nil
+	}
+
+	return username, nil
+}
+
+func (store *Store) deleteUserSession(w http.ResponseWriter, r *http.Request) (err error) {
+	session, err := sessionStore.Get(r, UserSession)
+	if err != nil {
+		fmt.Println("Error getting user session from store: " + err.Error())
+	}
+
+	// delete the username
+	delete(session.Values, "username")
+	// set the maxAge so it will be deleted
+	(*session.Options).MaxAge = -1
+
+	err = session.Save(r, w)
+	if err != nil {
+		err = errors.New("Error saving user session: " + err.Error())
+		return
+	}
+
+	return
+}
+
 // Set stores a value to the session with the provided key.
-func (store *Store) Set(key string, value interface{}, r *http.Request, w http.ResponseWriter) error {
-	session, err := store.Get(r, WebauthnSession)
+func (store *Store) Set(sessionName string, age int, key string, value interface{}, r *http.Request, w http.ResponseWriter) error {
+	session, _ := store.Get(r, sessionName)
 	// We can safely ignore any error here. We may have old cookies from a
-	// previous time the server ran (we generate a new key every time). But
+	// previous time the server ran. But we just clobber that here.
 	// cookies are very short lived for us -- only for the duration of the
 	// registration or login process (maybe a few minutes at most).
-	_ = err
-	// if err != nil {
-	// 	fmt.Println("failed getting from store")
-	// 	errorHandler.Fatal(err)
-	// }
+	(*session.Options).MaxAge = age
 	session.Values[key] = value
 	session.Save(r, w)
 	return nil

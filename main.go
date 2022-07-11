@@ -6,11 +6,14 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/rs/zerolog/log"
+	"github.com/gorilla/mux"
+
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/api"
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/models"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/certs"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 
-	"github.com/gorilla/mux"
 )
 
 const (
@@ -36,12 +39,19 @@ func main() {
 		certs.ReSignRootCert()
 		os.Exit(0)
 	}
-	// else continue with normal ca operations
+
+	// continue with normal CA operations
 
 	// Logger setup
 	fmt.Println("setting up logger...")
 	util.SetUpLogger(*logLevel, *logPath)
-	util.LogTest()
+	//util.LogTest()
+
+	// initialize database
+	err := models.Setup(cfg)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
 
 	// Normal Server operations
 
@@ -51,11 +61,13 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 
 	// initialize the API
-	api.InitializeVars()
+	api.Init()
 
 	// configure the router
 	router.HandleFunc("/la3/account/create-begin/{username}", api.CreateBegin).Methods("GET")
 	router.HandleFunc("/la3/account/create-finish/{username}", api.CreateFinish).Methods("POST")
+	router.HandleFunc("/la3/account/sign-csr/{username}", api.SignCSR).Methods("POST")
+
 
 	http.ListenAndServe(":"+port, router)
 

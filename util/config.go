@@ -17,6 +17,7 @@ import (
 	"errors"
 	"os"
 	"sync"
+	"fmt"
 
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/errorHandler"
 
@@ -30,10 +31,16 @@ var cfg *Config
 // needed to run the CA
 type Config struct {
 	Name                string            `yaml:"name"`              // name of the configuration, such as 'development' or 'production'
-	DbPassword          string            `yaml:"database password"` // database configuration
+	DbConfig 			string 			  `yaml:"database config"`
+
+	RPDisplayName 		string			  `yaml:"RP display name"`
+	RPID				string			  `yaml:"RP ID"`
+	RPOrigin 			string 			  `yaml:"RP origin"`
+
 	PublicKeyFile       string            `yaml:"public key"`        // public key file path
 	PrivateKeyFile      string            `yaml:"private key"`       // private key file path
-	RootCertificateFile string            `yaml:"root cert loc"`     // location of the root certificate
+	RootCertificateFile string            `yaml:"root certificate"`  // location of the root certificate
+
 	PublicKey           *rsa.PublicKey    `yaml:"-"`                 // public key
 	PrivateKey          *rsa.PrivateKey   `yaml:"-"`                 // private key
 	RootCertificate     *x509.Certificate `yaml:"-"`                 // root certificate
@@ -44,43 +51,51 @@ type Config struct {
 // After this function returns, Get() may be called to retrieve a copy of a
 // pointer to the singleton.
 func ConfigInit(configDir, configMode string) {
-	fileName := configDir + "/" + configMode + "/config.yml"
+	base := configDir + "/" + configMode + "/"
+	fileName := base + "config.yml"
 	once.Do(
 		func() {
-			// Read data in
-			fData, err := os.ReadFile(fileName)
+			f, err := os.Open(fileName)
+			if err != nil {
+				errorHandler.Fatal(err)
+			}
+			defer f.Close()
+			decoder := yaml.NewDecoder(f)
+			err = decoder.Decode(&cfg)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
 
-			// Parse yaml code
-			err = yaml.Unmarshal(fData, cfg)
-			if err != nil {
-				errorHandler.Fatal(err)
-			}
+			fmt.Println("got here")
 
 			// Read/parse root certificate
-			rootData, err := os.ReadFile(cfg.RootCertificateFile)
+			rootData, err := os.ReadFile(base + cfg.RootCertificateFile)
 			if err != nil {
-				errorHandler.Fatal(err)
-			}
-			cfg.RootCertificate, err = UnpackCertFromBytes(rootData)
-			if err != nil {
-				errorHandler.Fatal(err)
+				// we might not have one yet!
+				// TBD: switch to logger, produce warning
+			} else {
+				cfg.RootCertificate, err = UnpackCertFromBytes(rootData)
+				if err != nil {
+					errorHandler.Fatal(err)
+				}
 			}
 
+			fmt.Println("parsed root certificate")
+
 			// Read/parse public key
-			pubKeyData, err := os.ReadFile(cfg.PublicKeyFile)
+			pubKeyData, err := os.ReadFile(base + cfg.PublicKeyFile)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
+			fmt.Println("unpacking...")
 			cfg.PublicKey, err = UnpackPublicKeyFromBytes(pubKeyData)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
+			fmt.Println("unpacked!")
 
 			// Read/parse public key
-			privKeyData, err := os.ReadFile(cfg.PrivateKeyFile)
+			privKeyData, err := os.ReadFile(base + cfg.PrivateKeyFile)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
@@ -88,6 +103,8 @@ func ConfigInit(configDir, configMode string) {
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
+			fmt.Println("got here")
+
 		})
 }
 

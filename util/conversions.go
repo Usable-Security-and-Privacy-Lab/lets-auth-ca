@@ -10,6 +10,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 )
 
 // UnpackCSRFromPemString takes a PEM formatted x509 Certificate Signing
@@ -79,19 +80,16 @@ func UnpackPublicKeyFromPemString(publicKeyPemString string) (*rsa.PublicKey, er
 // with either PEM or ASN.1 DER and formats it into an rsa.PublicKey object and
 // returns a pointer to that object.
 func UnpackPublicKeyFromBytes(publicKeyBytes []byte) (*rsa.PublicKey, error) {
-	pubKeyPemBlock, _ := pem.Decode(publicKeyBytes)
-	var pubKey *rsa.PublicKey
-	var err error
-	if pubKeyPemBlock == nil {
-		pubKey, err = x509.ParsePKCS1PublicKey(publicKeyBytes)
-	} else {
-		pubKey, err = x509.ParsePKCS1PublicKey(pubKeyPemBlock.Bytes)
+	block, _ := pem.Decode(publicKeyBytes)
+	if block == nil {
+		return nil, errors.New("can't decode key")
 	}
-
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
-	return pubKey, nil
+	// TBD we should make this work with ecdsa keys?
+	return pub.(*rsa.PublicKey), nil
 }
 
 // PackPublicKeyToPemBytes takes a pointer to an rsa.PublicKey object and
