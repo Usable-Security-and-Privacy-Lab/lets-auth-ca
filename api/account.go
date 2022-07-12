@@ -22,12 +22,12 @@ type AuthKeyRequest struct {
 	AuthPublicKey string `json:"authPublicKey"`
 }
 
-type CreateOrLoginRequest struct {
+type CSRRequest struct {
 	CSR string `json:"CSR"`
 }
 
-type CreateOrLoginResponse struct {
-	Certificate *x509.Certificate `json:"certificate"`
+type CertificateResponse struct {
+	Certificate string `json:"certificate"`
 }
 
 func CreateBegin(w http.ResponseWriter, r *http.Request) {
@@ -169,6 +169,19 @@ func CreateFinish(w http.ResponseWriter, r *http.Request) {
 	// reset the request body
 	bodyCopy = ioutil.NopCloser(bytes.NewReader(body))
 	r.Body = bodyCopy
+	// print it
+	var bodyBytes []byte
+	fmt.Println("request:")
+		bodyBytes, err = ioutil.ReadAll(r.Body)
+	var prettyJSON bytes.Buffer
+	if err = json.Indent(&prettyJSON, bodyBytes, "", "\t"); err != nil {
+		fmt.Printf("JSON parse error: %v", err)
+		return
+	}
+	fmt.Println(string(prettyJSON.Bytes()))
+	// reset the request body
+	bodyCopy = ioutil.NopCloser(bytes.NewReader(body))
+	r.Body = bodyCopy
 
 	// Get the authenticator public key from the request
 	var request AuthKeyRequest
@@ -179,6 +192,12 @@ func CreateFinish(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	// need to convert from base64 URL encoding
+	converted, err := base64.StdEncoding.DecodeString(request.AuthPublicKey)
+	request.AuthPublicKey = string(converted)
+
+	fmt.Println("got key", request.AuthPublicKey)
+
 
 	// Store the authenticator public key
 	authKey := &models.AuthKey{
@@ -217,7 +236,7 @@ func SignCSR(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Get the CSR from the request
-	var request CreateOrLoginRequest
+	var request CSRRequest
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		fmt.Println("CSR missing or formatted incorrectly", err.Error())
@@ -279,8 +298,11 @@ func SignCSR(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send the auth certificate back
-	var response CreateOrLoginResponse
-	response.Certificate = authCertificate
+	pemCert := string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: authCertificate.Raw}))
+	fmt.Println("certificate in PEM format")
+	fmt.Println(pemCert)
+	var response CertificateResponse
+	response.Certificate = pemCert
 	json.NewEncoder(w).Encode(response)
 
 }
@@ -295,3 +317,4 @@ func jsonResponse(w http.ResponseWriter, d interface{}, c int) {
 	w.WriteHeader(c)
 	fmt.Fprintf(w, "%s", dj)
 }
+

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strings"
 	"gorm.io/gorm"
 )
 
@@ -17,6 +18,8 @@ type AuthKey struct {
 
 // CreateAuthKey creates a new AuthKey object in the database
 func CreateAuthKey(k *AuthKey) error {
+	// get rid of extra carriage return
+	k.Key = strings.ReplaceAll(k.Key, "\r\n", "\n")
 	err := db.Create(&k).Error
 	return err
 }
