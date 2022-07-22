@@ -64,7 +64,7 @@ func ReSignRootCert() {
 	}
 
 	rootData := util.PackCertificateToPemBytes(root)
-	err = os.WriteFile(cfg.RootCertificateFile, rootData, 0644)
+	err = os.WriteFile(cfg.Base+cfg.RootCertificateFile, rootData, 0644)
 	if err != nil {
 		errorHandler.Fatal(err)
 	}

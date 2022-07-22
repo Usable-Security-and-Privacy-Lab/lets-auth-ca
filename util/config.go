@@ -15,9 +15,9 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"os"
 	"sync"
-	"fmt"
 
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/errorHandler"
 
@@ -30,20 +30,21 @@ var cfg *Config
 // A Config is a singleton which reads in and stores the configuration file(s)
 // needed to run the CA
 type Config struct {
-	Name                string            `yaml:"name"`              // name of the configuration, such as 'development' or 'production'
-	DbConfig 			string 			  `yaml:"database config"`
+	Name     string `yaml:"name"` // name of the configuration, such as 'development' or 'production'
+	Base     string `yaml:"-"`
+	DbConfig string `yaml:"database config"`
 
-	RPDisplayName 		string			  `yaml:"RP display name"`
-	RPID				string			  `yaml:"RP ID"`
-	RPOrigin 			string 			  `yaml:"RP origin"`
+	RPDisplayName string `yaml:"RP display name"`
+	RPID          string `yaml:"RP ID"`
+	RPOrigin      string `yaml:"RP origin"`
 
-	PublicKeyFile       string            `yaml:"public key"`        // public key file path
-	PrivateKeyFile      string            `yaml:"private key"`       // private key file path
-	RootCertificateFile string            `yaml:"root certificate"`  // location of the root certificate
+	PublicKeyFile       string `yaml:"public key"`       // public key file path
+	PrivateKeyFile      string `yaml:"private key"`      // private key file path
+	RootCertificateFile string `yaml:"root certificate"` // location of the root certificate
 
-	PublicKey           *rsa.PublicKey    `yaml:"-"`                 // public key
-	PrivateKey          *rsa.PrivateKey   `yaml:"-"`                 // private key
-	RootCertificate     *x509.Certificate `yaml:"-"`                 // root certificate
+	PublicKey       *rsa.PublicKey    `yaml:"-"` // public key
+	PrivateKey      *rsa.PrivateKey   `yaml:"-"` // private key
+	RootCertificate *x509.Certificate `yaml:"-"` // root certificate
 }
 
 // ConfigInit is called early into the runtime of a program. This function
@@ -66,10 +67,11 @@ func ConfigInit(configDir, configMode string) {
 				errorHandler.Fatal(err)
 			}
 
-			fmt.Println("got here")
+			// set base
+			cfg.Base = base
 
 			// Read/parse root certificate
-			rootData, err := os.ReadFile(base + cfg.RootCertificateFile)
+			rootData, err := os.ReadFile(cfg.Base + cfg.RootCertificateFile)
 			if err != nil {
 				// we might not have one yet!
 				// TBD: switch to logger, produce warning
@@ -83,7 +85,7 @@ func ConfigInit(configDir, configMode string) {
 			fmt.Println("parsed root certificate")
 
 			// Read/parse public key
-			pubKeyData, err := os.ReadFile(base + cfg.PublicKeyFile)
+			pubKeyData, err := os.ReadFile(cfg.Base + cfg.PublicKeyFile)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
@@ -95,7 +97,7 @@ func ConfigInit(configDir, configMode string) {
 			fmt.Println("unpacked!")
 
 			// Read/parse public key
-			privKeyData, err := os.ReadFile(base + cfg.PrivateKeyFile)
+			privKeyData, err := os.ReadFile(cfg.Base + cfg.PrivateKeyFile)
 			if err != nil {
 				errorHandler.Fatal(err)
 			}
