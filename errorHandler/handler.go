@@ -1,5 +1,8 @@
 package errorHandler
 
+// We should probably look into using a logger. See here for suggestions:
+// https://github.com/sirupsen/logrus
+
 import (
 	"os"
 
