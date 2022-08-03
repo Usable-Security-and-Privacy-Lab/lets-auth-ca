@@ -14,7 +14,6 @@ go run main.go
 Command line flags include:
 
 - configDir [string] : configuration directory, default 'configs'
-- configMode [string] : configuration mode, default 'development'
 - logLevel [integer] : level of logging, default 1
 - logPath [string] : path to logging output file, empty string is stdout/stderr,
   default is blank
@@ -29,26 +28,6 @@ Log levels include:
 - 3: error
 - 4: fatal
 - 5: panic
-
-## Database setup
-
-1. Create a MySQL user
-
-```mysql
-mysql> CREATE USER 'letsauth'@'localhost' IDENTIFIED BY 'letsauth';
-```
-
-2. Create the database
-
-```mysql
-mysql> CREATE DATABASE lets_auth;
-```
-
-3. Grant the user privileges to just this new database.
-
-```mysql
-mysql> GRANT ALL on lets_auth.* TO 'letsauth'@'localhost';
-```
 
 ## Configuration file format
 
@@ -83,7 +62,56 @@ The database configuration string is formatted as:
 
 You will need to self-sign a root certificate, as shown below.
 
-## Generating keys and the root certificate
+## Storing configuration files
+
+Configuration files are stored in the configuration directory with the name
+`config.yml`. For example:
+
+- development-config
+  - config.yml
+- production-config
+  - config.yml
+
+## Setting up a development environment
+
+1. Setup the database
+1. Create a configuration directory
+1. Generate keys and the root certificate
+1. Create a configuration file
+
+### Setup the database
+
+1. Install MariaDB.
+
+   ```
+   brew install mariadb
+   ```
+
+1. Create a MySQL user
+
+   ```mysql
+   mysql> CREATE USER 'letsauth'@'localhost' IDENTIFIED BY 'letsauth';
+   ```
+
+1. Create the database
+
+   ```mysql
+   mysql> CREATE DATABASE lets_auth;
+   ```
+
+1. Grant the user privileges to just this new database.
+
+   ```mysql
+   mysql> GRANT ALL on lets_auth.* TO 'letsauth'@'localhost';
+   ```
+
+### Create a configuration directory
+
+Create a configuration directory in `configs/development`.
+
+### Generate keys and the root certificate
+
+In the configuration directory, run the following:
 
 ```
 openssl genrsa -out dev-private-key.pem 3072
@@ -96,19 +124,10 @@ Setup a configuration file, as shown below. Then:
 go run main.go -root
 ```
 
-## Storing configuration files
+### Create a configuration file
 
-Configuration files are stored in a subdirectory given by configuration name,
-which is passed as the `configMode` flag. The ultimate name of the configuration
-file is always `config.yml`. For example:
-
-- configs
-  - development
-    - config.yml
-  - production
-    - config.yml
-
-## Sample configuration file
+In `configs/development/config.yml`, create a configuration file. Here is a
+sample file:
 
 ```yaml
 name: "development"
@@ -122,3 +141,41 @@ public key: "dev-public-key.pem"
 private key: "dev-private-key.pem"
 root certificate: "dev-cert.pem"
 ```
+
+## Deploying the CA
+
+1. Clone the repository into your home directory on the production server.
+1. Run `go build` to build the code. You may need to
+   [install Go](https://go.dev/doc/install) first.
+1. Set up the database, as above, but with a strong password for the letsauth
+   user.
+1. Create a production configuration.
+1. Create a file in `/etc/systemd/system/letsauthca.go` with the following
+   contents:
+
+   ```
+   [Unit]
+   Description=MyApp Go Service
+   ConditionPathExists=/home/zappala/lets-auth-ca
+   After=network.target
+   [Service]
+   Type=simple
+   User=zappala
+   Group=zappala
+   WorkingDirectory=/home/zappala/lets-auth-ca
+   ExecStart=/usr/local/go/bin/go run .
+   Restart=on-failure
+   RestartSec=10
+   StandardOutput=syslog
+   StandardError=syslog
+   SyslogIdentifier=appgoservice
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+1. Setup the daemon:
+   ```
+   sudo systemctl daemon-reload
+   sudo systemctl enable letsauthca
+   sudo systemctl start letsauthca
+   ```

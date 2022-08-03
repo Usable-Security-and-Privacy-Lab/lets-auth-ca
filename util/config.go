@@ -51,8 +51,8 @@ type Config struct {
 // initializes the config singleton and reads in all of the referenced files.
 // After this function returns, Get() may be called to retrieve a copy of a
 // pointer to the singleton.
-func ConfigInit(configDir, configMode string) {
-	base := configDir + "/" + configMode + "/"
+func ConfigInit(configDir string) {
+	base := configDir + "/"
 	fileName := base + "config.yml"
 	once.Do(
 		func() {
