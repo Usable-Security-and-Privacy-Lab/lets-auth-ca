@@ -13,7 +13,8 @@ go run main.go
 
 Command line flags include:
 
-- configDir [string] : configuration directory, default 'configs'
+- configDir [string] : configuration directory, default
+  'lets-auth-ca-development'
 - logLevel [integer] : level of logging, default 1
 - logPath [string] : path to logging output file, empty string is stdout/stderr,
   default is blank
@@ -74,12 +75,13 @@ Configuration files are stored in the configuration directory with the name
 
 ## Setting up a development environment
 
-1. Setup the database
+1. Set up the database
 1. Create a configuration directory
 1. Generate keys and the root certificate
 1. Create a configuration file
+1. Deploy the CA
 
-### Setup the database
+### Set up the database
 
 1. Install MariaDB.
 
@@ -107,7 +109,7 @@ Configuration files are stored in the configuration directory with the name
 
 ### Create a configuration directory
 
-Create a configuration directory in `configs/development`.
+Create a configuration directory in `lets-auth-ca-development`.
 
 ### Generate keys and the root certificate
 
@@ -126,7 +128,7 @@ go run main.go -root
 
 ### Create a configuration file
 
-In `configs/development/config.yml`, create a configuration file. Here is a
+In `lets-auth-ca-development/config.yml`, create a configuration file. Here is a
 sample file:
 
 ```yaml
@@ -142,14 +144,15 @@ private key: "dev-private-key.pem"
 root certificate: "dev-cert.pem"
 ```
 
-## Deploying the CA
+## Deploy the CA
 
 1. Clone the repository into your home directory on the production server.
 1. Run `go build` to build the code. You may need to
    [install Go](https://go.dev/doc/install) first.
 1. Set up the database, as above, but with a strong password for the letsauth
    user.
-1. Create a production configuration.
+1. Create a production configuration in a directory called
+   `lets-auth-ca-production`.
 1. Create a file in `/etc/systemd/system/letsauthca.go` with the following
    contents:
 
@@ -174,7 +177,7 @@ root certificate: "dev-cert.pem"
     WantedBy=multi-user.target
    ```
 
-1. Setup the daemon:
+1. Set up and run the daemon:
    ```
    sudo systemctl daemon-reload
    sudo systemctl enable letsauthca
