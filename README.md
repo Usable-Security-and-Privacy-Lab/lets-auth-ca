@@ -155,22 +155,23 @@ root certificate: "dev-cert.pem"
 
    ```
    [Unit]
-   Description=MyApp Go Service
-   ConditionPathExists=/home/zappala/lets-auth-ca
-   After=network.target
-   [Service]
-   Type=simple
-   User=zappala
-   Group=zappala
-   WorkingDirectory=/home/zappala/lets-auth-ca
-   ExecStart=/usr/local/go/bin/go run .
-   Restart=on-failure
-   RestartSec=10
-   StandardOutput=syslog
-   StandardError=syslog
-   SyslogIdentifier=appgoservice
-   [Install]
-   WantedBy=multi-user.target
+    Description=Let's Authenticate CA
+    ConditionPathExists=/home/zappala/lets-auth-ca
+    After=network.target
+    [Service]
+    Type=simple
+    User=zappala
+    Group=zappala
+    WorkingDirectory=/home/zappala/lets-auth-ca
+    ExecStart=/home/zappala/lets-auth-ca/lets-auth-ca --configDir lets-auth-ca-prod\
+    uction
+    Restart=on-failure
+    RestartSec=10
+    StandardOutput=syslog
+    StandardError=syslog
+    SyslogIdentifier=letsauthca
+    [Install]
+    WantedBy=multi-user.target
    ```
 
 1. Setup the daemon:

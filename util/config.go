@@ -31,6 +31,8 @@ var cfg *Config
 // needed to run the CA
 type Config struct {
 	Name     string `yaml:"name"` // name of the configuration, such as 'development' or 'production'
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
 	Base     string `yaml:"-"`
 	DbConfig string `yaml:"database config"`
 
