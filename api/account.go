@@ -6,29 +6,17 @@ import (
 	"encoding/pem"
 
 	"bytes"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"crypto/x509"
 
-	"github.com/gorilla/mux"
 	"github.com/duo-labs/webauthn/protocol"
+	"github.com/gorilla/mux"
 
-	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/models"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/certs"
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/models"
 )
-
-type AuthKeyRequest struct {
-	AuthPublicKey string `json:"authPublicKey"`
-}
-
-type CSRRequest struct {
-	CSR string `json:"CSR"`
-}
-
-type CertificateResponse struct {
-	Certificate string `json:"certificate"`
-}
 
 func CreateBegin(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Started CreateBegin request %s\n", r.RequestURI)
@@ -89,7 +77,6 @@ func CreateBegin(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 
 	jsonResponse(w, options, http.StatusOK)
 }
@@ -154,10 +141,10 @@ func CreateFinish(w http.ResponseWriter, r *http.Request) {
 	auth := models.MakeAuthenticator(&credential.Authenticator)
 	credentialID := base64.URLEncoding.EncodeToString(credential.ID)
 	c := &models.Credential{
-		Auth:   auth,
-		PublicKey:       credential.PublicKey,
-		CredentialID:    credentialID,
-		UserID: user.ID,
+		Auth:         auth,
+		PublicKey:    credential.PublicKey,
+		CredentialID: credentialID,
+		UserID:       user.ID,
 	}
 	err = models.CreateCredential(c)
 	if err != nil {
@@ -172,7 +159,7 @@ func CreateFinish(w http.ResponseWriter, r *http.Request) {
 	// print it
 	var bodyBytes []byte
 	fmt.Println("request:")
-		bodyBytes, err = ioutil.ReadAll(r.Body)
+	bodyBytes, err = ioutil.ReadAll(r.Body)
 	var prettyJSON bytes.Buffer
 	if err = json.Indent(&prettyJSON, bodyBytes, "", "\t"); err != nil {
 		fmt.Printf("JSON parse error: %v", err)
@@ -198,10 +185,9 @@ func CreateFinish(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("got key", request.AuthPublicKey)
 
-
 	// Store the authenticator public key
 	authKey := &models.AuthKey{
-		Key: request.AuthPublicKey,
+		Key:    request.AuthPublicKey,
 		UserID: user.ID,
 	}
 	err = models.CreateAuthKey(authKey)
@@ -219,14 +205,14 @@ func CreateFinish(w http.ResponseWriter, r *http.Request) {
 func SignCSR(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Started SignCSR request %s\n", r.RequestURI)
 	defer fmt.Printf("Finished SignCSR request %s\n", r.RequestURI)
-	
+
 	vars := mux.Vars(r)
 	username, ok := vars["username"]
 	if !ok {
 		jsonResponse(w, fmt.Errorf("must supply a valid username i.e. foo@bar.com"), http.StatusBadRequest)
 		return
 	}
-	
+
 	user, err := models.GetUserByUsername(username)
 	if err != nil {
 		// user isn't in database
@@ -234,7 +220,7 @@ func SignCSR(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	
+
 	// Get the CSR from the request
 	var request CSRRequest
 	err = json.NewDecoder(r.Body).Decode(&request)
@@ -270,8 +256,8 @@ func SignCSR(w http.ResponseWriter, r *http.Request) {
 	// Second, convert the public key in the CSR into PEM format
 	publicKeyDer, _ := x509.MarshalPKIXPublicKey(csr.PublicKey)
 	publicKeyBlock := pem.Block{
-	    Type:  "PUBLIC KEY",
-	    Bytes: publicKeyDer,
+		Type:  "PUBLIC KEY",
+		Bytes: publicKeyDer,
 	}
 	publicKey := string(pem.EncodeToMemory(&publicKeyBlock))
 
@@ -317,4 +303,3 @@ func jsonResponse(w http.ResponseWriter, d interface{}, c int) {
 	w.WriteHeader(c)
 	fmt.Fprintf(w, "%s", dj)
 }
-
