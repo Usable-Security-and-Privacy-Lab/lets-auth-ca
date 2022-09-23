@@ -12,7 +12,8 @@ import (
 	"time"
 
 	// This import is blank because that's how the documentation tells us how to use it
-	"github.com/byu-ilab/Let-Auth-2/internal/dbManagers"
+
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/database"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -71,7 +72,7 @@ func openDatabase() *sql.DB {
 	fmt.Println("Opening up old database (model...certHelpers)")
 
 	// Open db connection
-	db, err := sql.Open("mysql", dbManagers.PassDBstr)
+	db, err := sql.Open("mysql", database.PassDBstr)
 	if err != nil {
 		panic(err.Error())
 	}
