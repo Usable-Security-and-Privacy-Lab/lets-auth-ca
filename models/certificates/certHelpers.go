@@ -13,8 +13,10 @@ import (
 
 	// This import is blank because that's how the documentation tells us how to use it
 
-	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/database"
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 // TagDevice is the struct used to check authorization and ... (TODO ADD MROE INFO)
@@ -71,19 +73,26 @@ func PubKeyFromCert(cert *x509.Certificate) ([]byte, error) {
 func openDatabase() *sql.DB {
 	fmt.Println("Opening up old database (model...certHelpers)")
 
-	// Open db connection
-	db, err := sql.Open("mysql", database.PassDBstr)
+	cfg := util.GetConfig()
+
+	// Open our database connection
+	temp_db, err := gorm.Open(mysql.Open(cfg.DbConfig), &gorm.Config{})
 	if err != nil {
-		panic(err.Error())
+		return nil
+	}
+	var sqlDB *sql.DB
+	sqlDB, err = temp_db.DB()
+	if err != nil {
+		return nil
 	}
 
 	// Double Check if db connection is open
-	err = db.Ping()
+	err = sqlDB.Ping()
 	if err != nil {
 		panic(err.Error())
 	}
 
-	return db
+	return sqlDB
 }
 
 // authNotRevoked checs to see if an authenticator certificate is in the database
