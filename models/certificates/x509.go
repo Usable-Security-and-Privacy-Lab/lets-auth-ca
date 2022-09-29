@@ -11,6 +11,8 @@ import (
 	"math/big"
 	"strconv"
 	"time"
+
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 )
 
 // CertMessage is used to pass websocket information
@@ -65,8 +67,10 @@ func SignCert(data []byte, deviceCert, activeDays string, checkDeviceCert bool) 
 
 	random := rand.Reader
 
+	cfg := util.GetConfig()
+
 	var key rsa.PrivateKey
-	LoadKey("/var/www/internal/certs/letsauthprivate.key", &key)
+	LoadKey(cfg.PrivateKeyFile, &key)
 
 	now := time.Now()
 
