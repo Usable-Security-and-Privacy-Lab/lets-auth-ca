@@ -20,6 +20,19 @@ type entry struct {
 	sessionPrivateKey string
 }
 
+type session struct {
+	sessionCertificate string
+	geoLocation        string
+}
+
+type sessionList struct {
+	authenticatorName string
+	sessions          []session
+}
+
+type AuthenticationDataResponse struct {
+}
+
 func AuthDataRetrieval(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Started AuthenticationData request %s\n", r.RequestURI)
 	defer fmt.Printf("Finished AuthenticationData request %s\n", r.RequestURI)
@@ -36,6 +49,13 @@ func AuthDataRetrieval(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(reqBody, &request)
 
 	authenticatorCertificate := request.authenticatorCertificate
+
+	fmt.Print(username)
+	fmt.Print(authenticatorCertificate)
+
+	// E. Relying Party Authentication
+	// TODO: authenticatorName from authenticatorCertificate  (authenticatorList = [authenticatorName])
+	// TODO: create map(domain) = [entry]
 
 }
 
