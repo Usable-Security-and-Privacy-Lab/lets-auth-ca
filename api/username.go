@@ -116,24 +116,34 @@ func ObtainNewCertificate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify that accountID isn't taken
-	err = certificates.VerifyAccountIDTaken(pemCert, username)
-	if err != nil {
-		if err.Error() == "account already taken by other user" {
-			w.WriteHeader(403)
-		} else {
-			w.WriteHeader(500)
+	/*
+		err = certificates.VerifyAccountIDTaken(pemCert, username)
+		if err != nil {
+			if err.Error() == "account already taken by other user" {
+				w.WriteHeader(403)
+			} else {
+				w.WriteHeader(500)
+			}
 		}
-	}
+	*/
 
 	// TODO: Verify if the accountID of user already exists (check not to put twice)
 	// maybe it can be combined with above statements
-	err = certificates.VerifyAccountIDExists(pemCert, username)
-	if err != nil {
-		if err.Error() == "account already exists by current user" {
-			w.WriteHeader(403)
-		} else {
-			w.WriteHeader(500)
+	/*
+		err = certificates.VerifyAccountIDExists(pemCert, username)
+		if err != nil {
+			if err.Error() == "account already exists by current user" {
+				w.WriteHeader(403)
+			} else {
+				w.WriteHeader(500)
+			}
 		}
+	*/
+	_, err = models.GetUserByUsername(username)
+	if err == nil {
+		fmt.Println("Attempted to register username that already exists: ", username)
+		jsonResponse(w, "User already exists", http.StatusConflict)
+		return
 	}
 
 	err = certificates.VerifyRSASignatureFromCert(authCert, CSR, signature)
