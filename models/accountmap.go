@@ -2,6 +2,8 @@ package models
 
 import (
 	"crypto/x509"
+	"errors"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -28,7 +30,32 @@ func CreateAccountMap(a *AccountMap) error {
 
 func VerifyAccountID(certificate *x509.Certificate, username string) error {
 	// acc := AccountMap{}
-	err := db.Where("username = ?", username).Error
+	accountID := certificate.Subject.CommonName
 
-	return err
+	var exists int
+	var err error
+
+	err = db.Where("accountID=? AND username!=?", accountID, username).Scan(&exists).Error
+
+	if err != nil {
+		fmt.Println(err)
+		return errors.New("database error")
+	}
+
+	if exists == 1 {
+		return errors.New("account already taken by other user")
+	}
+
+	err = db.Where("accountID=? AND username=?", accountID, username).Scan(&exists).Error
+
+	if err != nil {
+		fmt.Println(err)
+		return errors.New("database error")
+	}
+
+	if exists == 1 {
+		return errors.New("account already exists by current user")
+	}
+
+	return nil
 }
