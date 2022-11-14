@@ -27,7 +27,7 @@ type serviceResponse struct {
 	SignedCertificate string `json:"serviceCertificate"`
 }
 
-func ObtainNewCertificate(w http.ResponseWriter, r *http.Request) {
+func ObtainAccountCertificate(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Beginning serving request %s\n", r.RequestURI)
 	defer fmt.Printf("Finished serving request %s\n", r.RequestURI)
 
@@ -139,6 +139,8 @@ func ObtainNewCertificate(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	*/
+
+	// TODO: new identifier (only one time)
 	_, err = models.GetUserByUsername(username)
 	if err == nil {
 		fmt.Println("Attempted to register username that already exists: ", username)

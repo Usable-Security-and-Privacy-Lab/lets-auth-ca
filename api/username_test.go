@@ -6,12 +6,12 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type mockObtainNewCertificate struct {
+type mockObtainAccountCertificate struct {
 	mock.Mock
 }
 
 // TODO: implement tests
 
-func TestObtainNewCertificate(t *testing.T) {
+func TestObtainAccountCertificate(t *testing.T) {
 
 }
