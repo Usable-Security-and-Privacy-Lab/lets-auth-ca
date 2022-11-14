@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/certs"
-	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/legacy/certificates"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/models"
 	"github.com/gorilla/mux"
 )
@@ -50,12 +49,13 @@ func ObtainAccountCertificate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Sign the Certificate
-	cert, _ := pem.Decode([]byte(CSR))
+	byteCSR := []byte(CSR)
+	cert, _ := pem.Decode(byteCSR)
 	var csr *x509.CertificateRequest
 
 	// var err error
 	if cert == nil {
-		csr, err = x509.ParseCertificateRequest([]byte(CSR))
+		csr, err = x509.ParseCertificateRequest(byteCSR)
 		// checkError(err)
 	} else {
 		csr, err = x509.ParseCertificateRequest(cert.Bytes)
@@ -124,7 +124,7 @@ func ObtainAccountCertificate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = certificates.VerifyRSASignatureFromCert(authCert, CSR, signature)
+	err = certs.VerifyRSASignatureFromCert(signedCert, byteCSR, signature)
 	// TODO: AuthenticatorCertificate must be signed by CA, and for signed this account
 	if err != nil {
 		jsonResponse(w, err.Error(), http.StatusBadRequest)
@@ -132,7 +132,7 @@ func ObtainAccountCertificate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Add the certificate to the database
-	err = certificates.AddCert(pemCert, authCert)
+	err = certs.AddCert(signedCert, authCert)
 	if err != nil {
 		// AGAIN ASK FOR CLERIFICATION
 		jsonResponse(w, fmt.Errorf("failed adding cert to certs table"), http.StatusInternalServerError)
