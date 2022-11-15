@@ -4,12 +4,12 @@ package models
 // https://github.com/duo-labs/webauthn.io
 
 import (
+	"database/sql"
 	"encoding/binary"
 	"errors"
-	"database/sql"
 
-	"gorm.io/gorm"
 	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 )
@@ -18,7 +18,6 @@ var db *gorm.DB
 
 // ErrUsernameTaken is thrown when a user attempts to register a username that is taken.
 var ErrUsernameTaken = errors.New("username already taken")
-
 
 // BytesToID converts a byte slice to a uint. This is needed because the
 // WebAuthn specification deals with byte buffers, while the primary keys in
@@ -33,7 +32,7 @@ func BytesToID(buf []byte) uint {
 // It also populates the Config object
 func Setup(config *util.Config) error {
 	// assume the database is already created
-	
+
 	// Open our database connection
 	temp_db, err := gorm.Open(mysql.Open(config.DbConfig), &gorm.Config{})
 	if err != nil {
@@ -51,6 +50,7 @@ func Setup(config *util.Config) error {
 		&User{},
 		&Credential{},
 		&AuthKey{},
+		&AccountMap{},
 	)
 
 	if err != nil {
@@ -59,4 +59,3 @@ func Setup(config *util.Config) error {
 
 	return nil
 }
-
