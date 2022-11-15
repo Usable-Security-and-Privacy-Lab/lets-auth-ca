@@ -9,6 +9,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+
+	"gorm.io/gorm"
 )
 
 // VerifyRSASignatureFromCert verifies an RSA Signature (with SHA-256) for some string data
@@ -60,9 +62,11 @@ func AddCert(certString, deviceCert string) error {
 		return errors.New("unable to obtain public key from cert in AddNewCert")
 	}
 
+	var db gorm.DB
+
 	// first try to update the certificate in the database
 	sql := "UPDATE certs SET cert=?, certExp=?, lastUpdated=? WHERE pubKey=?"
-	if _, err = db.Exec(sql, certString, expTime, notBefore, pubKey); err != nil {
+	if err = db.Exec(sql, certString, expTime, notBefore, pubKey).Error; err != nil {
 		fmt.Println("Error updating cert in cert table")
 		fmt.Println(err)
 		return errors.New("unable to update certificate in the database")
@@ -72,7 +76,7 @@ func AddCert(certString, deviceCert string) error {
 	sql = "INSERT IGNORE certs(cert, eblob, certExp, pubKey, deviceCertId, lastUpdated)\n"
 	sql += "SELECT ?, ?, ?, ?, userDevice.id, ? FROM userDevice WHERE deviceCert=?"
 
-	_, err = db.Exec(sql, certString, "a blob", expTime, pubKey, notBefore, deviceCert)
+	err = db.Exec(sql, certString, "a blob", expTime, pubKey, notBefore, deviceCert).Error
 
 	if err != nil {
 		fmt.Println(err)

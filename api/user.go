@@ -131,13 +131,16 @@ func ObtainAccountCertificate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Add the certificate to the database
-	err = certs.AddCert(signedCert, authCert)
-	if err != nil {
-		// AGAIN ASK FOR CLERIFICATION
-		jsonResponse(w, fmt.Errorf("failed adding cert to certs table"), http.StatusInternalServerError)
-		return
-	}
+	/*
+		// Maybe we don't need this statement
+		// Add the certificate to the database
+		err = certs.AddCert(signedCert, authCert)
+		if err != nil {
+			// AGAIN ASK FOR CLERIFICATION
+			jsonResponse(w, fmt.Errorf("failed adding cert to certs table"), http.StatusInternalServerError)
+			return
+		}
+	*/
 
 	response := serviceResponse{SignedCertificate: pemCert}
 	final, _ := json.Marshal(response)

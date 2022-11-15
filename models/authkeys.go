@@ -2,6 +2,7 @@ package models
 
 import (
 	"strings"
+
 	"gorm.io/gorm"
 )
 
@@ -12,7 +13,7 @@ import (
 type AuthKey struct {
 	gorm.Model
 
-	Key string
+	Key    string
 	UserID uint
 }
 
@@ -31,9 +32,9 @@ func GetAuthKeysForUser(user User) ([]AuthKey, error) {
 	return authKeys, err
 }
 
-func AuthKeyPresent(key string, authKeys []AuthKey) (bool) {
+func AuthKeyPresent(key string, authKeys []AuthKey) bool {
 	for i := 0; i < len(authKeys); i++ {
-		if authKeys[i].Key ==  key {
+		if authKeys[i].Key == key {
 			return true
 		}
 	}
