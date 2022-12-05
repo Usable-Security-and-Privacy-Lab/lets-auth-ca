@@ -1,11 +1,14 @@
 package api
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/models"
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 	"github.com/gorilla/mux"
 )
 
@@ -15,9 +18,9 @@ type authenticationDataRequest struct {
 
 type entry struct {
 	accountName       string
-	accountID         string
-	sessionPublicKey  string
-	sessionPrivateKey string
+	accountID         uint
+	sessionPublicKey  *rsa.PublicKey
+	sessionPrivateKey *rsa.PrivateKey
 }
 
 type session struct {
@@ -55,10 +58,39 @@ func AuthDataRetrieval(w http.ResponseWriter, r *http.Request) {
 
 	// E. Relying Party Authentication
 	// TODO: authenticatorName from authenticatorCertificate  (authenticatorList = [authenticatorName])
-	// TODO: create map(domain) = [entry]
+
+	/*
+		create map(domain) = {"domain": {accountName, accountID, sessionPublicKey, sessionPrivateKey}}
+		sessionList = [authenticatorName, [sessionCertificate, geoLocation]]
+
+		{E(PBKDF(masterPassword), symmetricKey) |
+			E(symmetricKey, [authenticatorName] |
+			{"domain": {accountName, accountID, sessionPublicKey, sessionPrivateKey})}
+	*/
+
+	cfg := util.GetConfig()
+
+	var domainMap = make(map[string]entry)
+
+	var userObj, err = models.GetUserByUsername(username)
+
+	if err != nil {
+		// user isn't in database
+		fmt.Printf("User is not in database")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	domainMap[cfg.RPID] = entry{
+		accountName:       username,
+		accountID:         userObj.ID,
+		sessionPublicKey:  cfg.PublicKey,
+		sessionPrivateKey: cfg.PrivateKey,
+	}
 
 }
 
+// What will be the difference between POST and PUT in here?
 func AuthDataStorageCache(w http.ResponseWriter, r *http.Request) {
 
 }
