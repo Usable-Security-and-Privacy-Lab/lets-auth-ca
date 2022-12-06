@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/certs"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/models"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
 	"github.com/gorilla/mux"
@@ -53,8 +54,16 @@ func AuthDataRetrieval(w http.ResponseWriter, r *http.Request) {
 
 	authenticatorCertificate := request.authenticatorCertificate
 
+	decryptedBytes, err := certs.DecodeAuthCert(authenticatorCertificate)
+
+	if err != nil {
+		fmt.Printf("Error in decoding authCert")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	fmt.Print(username)
-	fmt.Print(authenticatorCertificate)
+	fmt.Print(decryptedBytes)
 
 	// E. Relying Party Authentication
 	// TODO: authenticatorName from authenticatorCertificate  (authenticatorList = [authenticatorName])
@@ -72,7 +81,7 @@ func AuthDataRetrieval(w http.ResponseWriter, r *http.Request) {
 
 	var domainMap = make(map[string]entry)
 
-	var userObj, err = models.GetUserByUsername(username)
+	userObj, err := models.GetUserByUsername(username)
 
 	if err != nil {
 		// user isn't in database
@@ -92,9 +101,21 @@ func AuthDataRetrieval(w http.ResponseWriter, r *http.Request) {
 
 // What will be the difference between POST and PUT in here?
 func AuthDataStorageCache(w http.ResponseWriter, r *http.Request) {
-
+	lock := models.DataLock{
+		UserID: 1,
+	}
+	err := models.CreateDataLock(&lock)
+	if err != nil {
+		fmt.Printf("Cannot create lock")
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func AuthDataStorageIdempotent(w http.ResponseWriter, r *http.Request) {
-
+	count, err := models.CountDataLock(1)
+	if err != nil {
+		fmt.Printf("Cannot create lock")
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	print(count)
 }
