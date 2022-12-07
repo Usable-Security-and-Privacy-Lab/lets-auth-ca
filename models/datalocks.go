@@ -1,13 +1,15 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type DataLock struct {
 	gorm.Model
 
-	UserID uint
+	UserID         uint
+	LockIdentifier uuid.UUID
 }
 
 func CreateDataLock(d *DataLock) error {
@@ -22,6 +24,13 @@ func CountDataLock(userID uint) (uint, error) {
 		return 0, err
 	}
 	return uint(count), nil
+}
+
+func GetLockByUserID(id uint) (DataLock, error) {
+	l := DataLock{}
+	err := db.Where("user_id=?", id).First(&l).Error
+
+	return l, err
 }
 
 func DeleteDataLock(userID uint) error {

@@ -10,11 +10,18 @@ import (
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/certs"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/models"
 	"github.com/Usable-Security-and-Privacy-Lab/lets-auth-ca/util"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
 type authenticationDataRequest struct {
 	authenticatorCertificate string `json:"authenticatorCertificate"`
+}
+
+type authenticationValutRequest struct {
+	authenticatorCertificate string `json:"authenticatorCertificate"`
+	authenticationData       string `json:"authenticationData"`
+	lockIdentifier           string `json:"lockIdentifier"`
 }
 
 type entry struct {
@@ -100,22 +107,88 @@ func AuthDataRetrieval(w http.ResponseWriter, r *http.Request) {
 }
 
 // What will be the difference between POST and PUT in here?
-func AuthDataStorageCache(w http.ResponseWriter, r *http.Request) {
-	lock := models.DataLock{
-		UserID: 1,
+// getting a lock
+func AuthDataObtainLock(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	username, ok := vars["username"]
+	if !ok {
+		jsonResponse(w, fmt.Errorf("must supply a valid username i.e. foo@bar.com"), http.StatusBadRequest)
+		return
 	}
-	err := models.CreateDataLock(&lock)
+
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var request authenticationDataRequest
+	json.Unmarshal(reqBody, &request)
+
+	authenticatorCertificate := request.authenticatorCertificate
+	fmt.Printf(authenticatorCertificate)
+
+	// TODO: validate authenticator certificate. If it fails, it will give 403 error
+
+	user, err := models.GetUserByUsername(username)
 	if err != nil {
-		fmt.Printf("Cannot create lock")
+		// user isn't in database
+		fmt.Printf("User is not in database")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if user.IsLocked {
+		fmt.Printf("already obtained the lock")
+		w.WriteHeader(http.StatusConflict)
+	}
+
+	user.IsLocked = true
+	err = models.UpdateUser(&user)
+	if err != nil {
+		fmt.Printf("failed to obtain lock")
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	var dataLock = models.DataLock{
+		UserID:         user.ID,
+		LockIdentifier: uuid.New(),
+	}
+
+	err = models.CreateDataLock(&dataLock)
+	if err != nil {
+		fmt.Printf("failed to obtain lock")
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-func AuthDataStorageIdempotent(w http.ResponseWriter, r *http.Request) {
-	count, err := models.CountDataLock(1)
+// store the vault
+func AuthDataStoreVault(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	username, ok := vars["username"]
+	if !ok {
+		jsonResponse(w, fmt.Errorf("must supply a valid username i.e. foo@bar.com"), http.StatusBadRequest)
+		return
+	}
+
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var request authenticationValutRequest
+	json.Unmarshal(reqBody, &request)
+
+	authenticatorCertificate := request.authenticatorCertificate
+	fmt.Printf(authenticatorCertificate)
+
+	user, err := models.GetUserByUsername(username)
 	if err != nil {
-		fmt.Printf("Cannot create lock")
+		// user isn't in database
+		fmt.Printf("User is not in database")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	lock, err := models.GetLockByUserID(user.ID)
+	if err != nil {
+		fmt.Printf("Cannot find lock")
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	print(count)
+
+	if lock.LockIdentifier != uuid.MustParse(request.lockIdentifier) {
+		fmt.Printf("invalid lock identifier")
+		w.WriteHeader(http.StatusConflict)
+	}
 }

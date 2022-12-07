@@ -60,8 +60,8 @@ func main() {
 	router.HandleFunc("/la3/account/sign-csr/{username}", api.SignCSR).Methods("POST")
 
 	router.HandleFunc("/la3/users/{username}/data", api.AuthDataRetrieval).Methods("GET")
-	router.HandleFunc("/la3/users/{username}/data", api.AuthDataStorageCache).Methods("POST")
-	router.HandleFunc("/la3/users/{username}/data", api.AuthDataStorageIdempotent).Methods("PUT")
+	router.HandleFunc("/la3/users/{username}/data", api.AuthDataObtainLock).Methods("POST")
+	router.HandleFunc("/la3/users/{username}/data", api.AuthDataStoreVault).Methods("PUT")
 
 	url := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 

@@ -6,16 +6,17 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/duo-labs/webauthn/webauthn"
 	"github.com/duo-labs/webauthn/protocol"
+	"github.com/duo-labs/webauthn/webauthn"
 )
 
 // User represents the user model
 type User struct {
 	gorm.Model
-	Username    string          `json:"name" gorm:"not null" validate:"required,min=2,max=25,alphanumunicode"`
-	DisplayName string          `json:"display_name" gorm:"not null"`
-	Credentials []Credential	`json:"credentials"`
+	Username    string       `json:"name" gorm:"not null" validate:"required,min=2,max=25,alphanumunicode"`
+	DisplayName string       `json:"display_name" gorm:"not null"`
+	Credentials []Credential `json:"credentials"`
+	IsLocked    bool         `json:"is_locked"`
 }
 
 // NewUser creates and returns a new User
@@ -25,6 +26,7 @@ func NewUser(name string) User {
 	user.Username = name
 	user.DisplayName = name + "@letsauth.org"
 	user.Credentials = []Credential{}
+	user.IsLocked = false
 
 	return user
 }
@@ -34,7 +36,7 @@ func NewUser(name string) User {
 func GetUser(id uint) (User, error) {
 	u := User{}
 	err := db.Where("id=?", id).First(&u).Error
-	
+
 	return u, err
 }
 
@@ -90,8 +92,8 @@ func (u User) WebAuthnCredentials() []webauthn.Credential {
 	for i, cred := range credentials {
 		credentialID, _ := base64.URLEncoding.DecodeString(cred.CredentialID)
 		auth := webauthn.Authenticator{
-			AAGUID: cred.Auth.AAGUID,
-			SignCount: cred.Auth.SignCount,
+			AAGUID:       cred.Auth.AAGUID,
+			SignCount:    cred.Auth.SignCount,
 			CloneWarning: cred.Auth.CloneWarning,
 		}
 		wcs[i] = webauthn.Credential{
