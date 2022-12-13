@@ -59,6 +59,10 @@ func main() {
 	router.HandleFunc("/la3/account/create-finish/{username}", api.CreateFinish).Methods("POST")
 	router.HandleFunc("/la3/account/sign-csr/{username}", api.SignCSR).Methods("POST")
 
+	router.HandleFunc("/la3/users/{username}/data", api.AuthDataRetrieval).Methods("GET")
+	router.HandleFunc("/la3/users/{username}/data", api.AuthDataObtainLock).Methods("POST")
+	router.HandleFunc("/la3/users/{username}/data", api.AuthDataStoreVault).Methods("PUT")
+
 	url := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 
 	fmt.Println("Serving Let's Authenticate version 3 API on", url)

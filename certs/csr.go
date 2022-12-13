@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"math/big"
 	"time"
 
@@ -25,7 +26,6 @@ const SessionCertValidMins int = 10
 const nanoToSeconds int = 1000000000
 const secondsToMinutes int = 60
 const secondsToDays int = 86400
-
 
 // Sign an Authentication Certificate. May want to do validation of the CSR here.
 func SignAuthCertificate(csr *x509.CertificateRequest) (*x509.Certificate, error) {
@@ -94,4 +94,31 @@ func signCSR(csr *x509.CertificateRequest, activeDays int) (*x509.Certificate, e
 	}
 
 	return signedCert, nil
+}
+
+func DecodeAuthCert(authenticatorCertificate string) ([]byte, error) {
+	return retrieveAuthCert(authenticatorCertificate, AuthCertValidDays)
+}
+
+// RetrieveAuthCert gets the authenticator certificate, the ca's private key, and the
+// number of days that the certificate should be active for and then signs the
+// Certificate Signing Request using the root certificate. The function then
+// returns a pointer to the resulting x509.Certificate object.
+func retrieveAuthCert(authCert string, activeDays int) ([]byte, error) {
+
+	// get the configuration
+	cfg := util.GetConfig()
+
+	// rootNotBefore := time.Now()
+	// rootNotAfter := rootNotBefore.Add(time.Duration(nanoToSeconds * secondsToDays * RootCertValidDays))
+
+	AuthCertBytes := []byte(authCert)
+	AuthCertPemBlock, _ := pem.Decode(AuthCertBytes)
+
+	decryptedBytes, err := x509.DecryptPEMBlock(AuthCertPemBlock, util.PackPrivateKeyToPemBytes(cfg.PrivateKey))
+	if err != nil {
+		return nil, err
+	}
+
+	return decryptedBytes, nil
 }
