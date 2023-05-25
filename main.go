@@ -58,6 +58,9 @@ func main() {
 	router.HandleFunc("/la3/account/create-begin/{username}", api.CreateBegin).Methods("GET")
 	router.HandleFunc("/la3/account/create-finish/{username}", api.CreateFinish).Methods("POST")
 	router.HandleFunc("/la3/account/sign-csr/{username}", api.SignCSR).Methods("POST")
+	router.HandleFunc("/la3/account/sign-in/{username}/{password}", api.SignIn).Methods("POST")
+	router.HandleFunc("/la3/login/begin/{email_or_phone_register}", api.Begin).Methods("GET")
+	router.HandleFunc("/la3/login/finish/{email_or_phone_register}", api.Begin).Methods("POST")
 
 	url := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 

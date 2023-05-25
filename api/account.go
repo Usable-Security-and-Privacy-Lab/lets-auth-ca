@@ -29,6 +29,12 @@ type CSRRequest struct {
 type CertificateResponse struct {
 	Certificate string `json:"certificate"`
 }
+func SignIn(w http.ResponseWriter, r *http.Request){
+	fmt.Printf("Started SignIn request %s\n", r.RequestURI)
+	defer fmt.Printf("Finished SignIn request %s\n", r.RequestURI)
+
+	vars := mux.Vars(r)
+}
 
 func CreateBegin(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Started CreateBegin request %s\n", r.RequestURI)
